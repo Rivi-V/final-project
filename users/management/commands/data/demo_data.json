@@ -1,0 +1,60 @@
+{
+  "users": [
+    {
+      "email": "maria@yandex.ru",
+      "password": "password",
+      "name": "Мария",
+      "surname": "Иванова",
+      "about": "Backend-разработчик, люблю pet-проекты и Python.",
+      "phone": "+79990000001",
+      "github_url": "https://github.com/maria",
+      "skills": ["Python", "Django"]
+    },
+    {
+      "email": "alex@example.com",
+      "password": "password",
+      "name": "Алексей",
+      "surname": "Смирнов",
+      "about": "Frontend-разработчик, работаю с React и TypeScript.",
+      "phone": "+79990000002",
+      "github_url": "https://github.com/alex",
+      "skills": ["React"]
+    },
+    {
+      "email": "olga@example.com",
+      "password": "password",
+      "name": "Ольга",
+      "surname": "Петрова",
+      "about": "Дизайнер интерфейсов, люблю исследовать новые идеи.",
+      "phone": "+79990000003",
+      "github_url": "https://github.com/olga",
+      "skills": ["Figma"]
+    }
+  ],
+  "projects": [
+    {
+      "owner": "maria@yandex.ru",
+      "name": "Task Tracker",
+      "description": "Простой трекер задач для маленькой продуктовой команды.",
+      "github_url": "https://github.com/maria/task-tracker",
+      "skills": ["Python", "Django"],
+      "participants": ["maria@yandex.ru", "alex@example.com"]
+    },
+    {
+      "owner": "alex@example.com",
+      "name": "UI Kit Showcase",
+      "description": "Каталог UI-компонентов для pet-проектов.",
+      "github_url": "https://github.com/alex/ui-kit-showcase",
+      "skills": ["React", "Figma"],
+      "participants": ["alex@example.com", "olga@example.com"]
+    },
+    {
+      "owner": "olga@example.com",
+      "name": "Portfolio Builder",
+      "description": "Конструктор личного портфолио для начинающих специалистов.",
+      "github_url": "https://github.com/olga/portfolio-builder",
+      "skills": ["Figma", "Python"],
+      "participants": ["olga@example.com", "maria@yandex.ru"]
+    }
+  ]
+}

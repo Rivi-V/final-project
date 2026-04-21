@@ -1,47 +1,37 @@
-import tempfile
-from pathlib import Path
+from http import HTTPStatus
 
-from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase
+from django.urls import reverse
 
 from projects.models import Project
 from users.models import User
 
-TEST_MEDIA_ROOT = tempfile.mkdtemp()
+PROJECTS_PER_PAGE = 12
 
 
-def variant_templates(variant: str):
-    base = Path(settings.BASE_DIR)
-    return [
-        {
-            'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [base / f'templates_var{variant}'],
-            'APP_DIRS': True,
-            'OPTIONS': {
-                'context_processors': [
-                    'django.template.context_processors.request',
-                    'django.contrib.auth.context_processors.auth',
-                    'django.contrib.messages.context_processors.messages',
-                ],
-            },
-        }
-    ]
-
-
-@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT, TASK_VERSION='1', TEMPLATES=variant_templates('1'))
 class ProjectCoreTests(TestCase):
-    def setUp(self):
-        self.owner = User.objects.create_user(
-            email='owner@example.com', password='password', name='Owner', surname='User'
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = User.objects.create_user(
+            email='owner@example.com',
+            password='password',
+            name='Owner',
+            surname='User',
         )
-        self.member = User.objects.create_user(
-            email='member@example.com', password='password', name='Member', surname='User'
+        cls.member = User.objects.create_user(
+            email='member@example.com',
+            password='password',
+            name='Member',
+            surname='User',
         )
+        cls.owner_client = Client()
+        cls.owner_client.force_login(cls.owner)
+        cls.member_client = Client()
+        cls.member_client.force_login(cls.member)
 
     def test_project_create_adds_owner_to_participants(self):
-        self.client.force_login(self.owner)
-        response = self.client.post(
-            '/projects/create-project/',
+        response = self.owner_client.post(
+            reverse('projects:create-slash'),
             {
                 'name': 'New Project',
                 'description': 'Description',
@@ -50,7 +40,10 @@ class ProjectCoreTests(TestCase):
             },
         )
         project = Project.objects.get(name='New Project')
-        self.assertRedirects(response, f'/projects/{project.id}')
+        self.assertRedirects(
+            response,
+            reverse('projects:detail-no-slash', args=(project.id,)),
+        )
         self.assertEqual(project.owner, self.owner)
         self.assertTrue(project.participants.filter(pk=self.owner.pk).exists())
 
@@ -58,29 +51,37 @@ class ProjectCoreTests(TestCase):
         project = Project.objects.create(name='Pet', description='Desc', owner=self.owner)
         project.participants.add(self.owner)
 
-        self.client.force_login(self.member)
-        fav_resp = self.client.post(f'/projects/{project.id}/toggle-favorite/')
-        self.assertEqual(fav_resp.json()['favorited'], True)
+        favorite_response = self.member_client.post(
+            reverse('projects:toggle-favorite', args=(project.id,)),
+        )
+        self.assertTrue(favorite_response.json()['favorited'])
 
-        participate_resp = self.client.post(f'/projects/{project.id}/toggle-participate/')
-        self.assertEqual(participate_resp.json()['participant'], True)
+        participate_response = self.member_client.post(
+            reverse('projects:toggle-participate', args=(project.id,)),
+        )
+        self.assertTrue(participate_response.json()['participant'])
 
-        favorites_page = self.client.get('/projects/favorites/')
+        favorites_page = self.member_client.get(reverse('projects:favorites'))
         self.assertContains(favorites_page, 'Pet')
 
-        participants_page = self.client.get('/users/list/?filter=owners-of-favorite-projects')
+        participants_page = self.member_client.get(
+            f"{reverse('users:list')}?filter=owners-of-favorite-projects"
+        )
         participants = list(participants_page.context['participants'])
         self.assertEqual(participants, [self.owner])
 
-        for idx in range(13):
+        for idx in range(PROJECTS_PER_PAGE + 1):
             Project.objects.create(name=f'Project {idx}', owner=self.owner)
-        response = self.client.get('/projects/list/')
+        response = self.client.get(reverse('projects:list-slash'))
         self.assertEqual(response.context['projects'].paginator.num_pages, 2)
 
     def test_complete_project(self):
         project = Project.objects.create(name='Closable', owner=self.owner)
-        self.client.force_login(self.owner)
-        response = self.client.post(f'/projects/{project.id}/complete/')
-        project.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(project.status, Project.STATUS_CLOSED)
+
+        response = self.owner_client.post(
+            reverse('projects:complete', args=(project.id,)),
+        )
+        updated_project = Project.objects.get(pk=project.pk)
+
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertEqual(updated_project.status, Project.STATUS_CLOSED)

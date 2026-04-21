@@ -1,10 +1,10 @@
 import re
-from urllib.parse import urlparse
 
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import PasswordChangeForm
 
+from team_finder.validators import validate_repository_url
 from users.models import User
 
 PHONE_PATTERN = re.compile(r'^(8\d{10}|\+7\d{10})$')
@@ -43,7 +43,11 @@ class LoginForm(forms.Form):
         email = cleaned_data.get('email')
         password = cleaned_data.get('password')
         if email and password:
-            self.user_cache = authenticate(self.request, email=email, password=password)
+            self.user_cache = authenticate(
+                self.request,
+                email=email,
+                password=password,
+            )
             if self.user_cache is None:
                 raise forms.ValidationError('Неверный имейл или пароль')
         return cleaned_data
@@ -62,28 +66,36 @@ class ProfileForm(forms.ModelForm):
         if not phone:
             return ''
         if not PHONE_PATTERN.fullmatch(phone):
-            raise forms.ValidationError('Введите телефон в формате 8XXXXXXXXXX или +7XXXXXXXXXX')
+            raise forms.ValidationError(
+                'Введите телефон в формате 8XXXXXXXXXX или +7XXXXXXXXXX',
+            )
 
         normalized = '+7' + phone[1:] if phone.startswith('8') else phone
         alt = '8' + normalized[2:]
-        exists = User.objects.exclude(pk=self.instance.pk).filter(phone__in=[phone, normalized, alt]).exists()
+        exists = (
+            User.objects
+            .exclude(pk=self.instance.pk)
+            .filter(phone__in=[phone, normalized, alt])
+            .exists()
+        )
         if exists:
             raise forms.ValidationError('Этот номер телефона уже используется')
         return normalized
 
     def clean_github_url(self):
-        url = (self.cleaned_data.get('github_url') or '').strip()
-        if not url:
-            return ''
-        host = urlparse(url).netloc.lower()
-        if host.startswith('www.'):
-            host = host[4:]
-        if host != 'github.com':
-            raise forms.ValidationError('Ссылка должна вести на GitHub')
-        return url
+        return validate_repository_url(self.cleaned_data.get('github_url'))
 
 
 class UserPasswordChangeForm(PasswordChangeForm):
-    old_password = forms.CharField(widget=forms.PasswordInput, label='Старый пароль')
-    new_password1 = forms.CharField(widget=forms.PasswordInput, label='Новый пароль')
-    new_password2 = forms.CharField(widget=forms.PasswordInput, label='Повторите пароль')
+    old_password = forms.CharField(
+        widget=forms.PasswordInput,
+        label='Старый пароль',
+    )
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput,
+        label='Новый пароль',
+    )
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput,
+        label='Повторите пароль',
+    )

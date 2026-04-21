@@ -1,0 +1,51 @@
+from enum import StrEnum
+from pathlib import Path
+
+PROJECTS_PER_PAGE = 12
+USERS_PER_PAGE = 12
+
+PROJECT_NAME_MAX_LENGTH = 200
+PROJECT_STATUS_OPEN = 'open'
+PROJECT_STATUS_CLOSED = 'closed'
+PROJECT_STATUS_CHOICES = (
+    (PROJECT_STATUS_OPEN, 'Открыт'),
+    (PROJECT_STATUS_CLOSED, 'Закрыт'),
+)
+PROJECT_STATUS_MAX_LENGTH = max(len(status) for status, _ in PROJECT_STATUS_CHOICES)
+
+SKILL_NAME_MAX_LENGTH = 124
+USER_NAME_MAX_LENGTH = 124
+USER_SURNAME_MAX_LENGTH = 124
+USER_PHONE_MAX_LENGTH = 12
+USER_ABOUT_MAX_LENGTH = 256
+
+AVATAR_SIZE = 256
+AVATAR_FONT_SIZE = 128
+AVATAR_TEXT_BBOX_ANCHOR = (0, 0)
+AVATAR_TEXT_Y_OFFSET = 10
+AVATAR_TEXT_FILL = 'white'
+AVATAR_DEFAULT_LETTER = '?'
+AVATAR_IMAGE_FORMAT = 'PNG'
+AVATAR_FILENAME_TEMPLATE = 'avatar_{}.png'
+AVATAR_RANDOM_MIN = 100000
+AVATAR_RANDOM_MAX = 999999
+AVATAR_POSSIBLE_FONT_PATHS = (
+    Path('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'),
+    Path('/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf'),
+)
+
+
+class AvatarColor(StrEnum):
+    PASTEL_BLUE = '#8AAAE5'
+    MINT = '#7FC8A9'
+    PURPLE = '#9C89B8'
+    SAGE = '#A1C181'
+    DUSTY_TEAL = '#84A59D'
+    PERIWINKLE = '#B8B8FF'
+    GRAY_BLUE = '#8E9AAF'
+    OLIVE_GREEN = '#90BE6D'
+    EUCALYPTUS = '#A3B18A'
+    TAUPE = '#A68A64'
+
+
+AVATAR_PALETTE = tuple(color.value for color in AvatarColor)

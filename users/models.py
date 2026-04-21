@@ -1,12 +1,19 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 
+from team_finder.constants import (
+    SKILL_NAME_MAX_LENGTH,
+    USER_ABOUT_MAX_LENGTH,
+    USER_NAME_MAX_LENGTH,
+    USER_PHONE_MAX_LENGTH,
+    USER_SURNAME_MAX_LENGTH,
+)
 from users.managers import UserManager
 from users.utils import generate_avatar_file
 
 
 class Skill(models.Model):
-    name = models.CharField('Название', max_length=124, unique=True)
+    name = models.CharField('Название', max_length=SKILL_NAME_MAX_LENGTH, unique=True)
 
     class Meta:
         ordering = ('name',)
@@ -19,12 +26,12 @@ class Skill(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField('Email', unique=True)
-    name = models.CharField('Имя', max_length=124)
-    surname = models.CharField('Фамилия', max_length=124)
+    name = models.CharField('Имя', max_length=USER_NAME_MAX_LENGTH)
+    surname = models.CharField('Фамилия', max_length=USER_SURNAME_MAX_LENGTH)
     avatar = models.ImageField('Аватар', upload_to='avatars/', blank=True)
-    phone = models.CharField('Телефон', max_length=12, blank=True)
+    phone = models.CharField('Телефон', max_length=USER_PHONE_MAX_LENGTH, blank=True)
     github_url = models.URLField('GitHub', blank=True)
-    about = models.CharField('О себе', max_length=256, blank=True)
+    about = models.CharField('О себе', max_length=USER_ABOUT_MAX_LENGTH, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
