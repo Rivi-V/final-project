@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ project.title }}{% endblock %}
+{% block title %}{{ project.name }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/project_details.css' %}">
@@ -39,22 +39,41 @@
         </div>
 
         <div class="project-card-body">
-                <h2 class="project-title">{{ project.name }}</h2>
-                <p class="project-description">{{ project.description }}</p>
+            <h2 class="project-title">{{ project.name }}</h2>
+            <p class="project-description">{{ project.description }}</p>
 
-                {% if project.github_url %}
-                <p class="project-link">
-                    {% include 'includes/svg/github.html' %}
-                    <a href="{{ project.github_url }}" target="_blank">Репозиторий на GitHub</a>
-                </p>
-                {% endif %}
+            {% if project.github_url %}
+            <p class="project-link">
+                {% include 'includes/svg/github.html' %}
+                <a href="{{ project.github_url }}" target="_blank">Репозиторий на GitHub</a>
+            </p>
+            {% endif %}
         </div>
+
         <div class="project-actions">
             <a href="#"
                class="black-button black-button-share share-button"
                data-url="/projects/{{ project.id }}">
                 {% include 'includes/svg/share.html' %}
             </a>
+
+            {% if user.is_authenticated %}
+                <button
+                    type="button"
+                    id="favorite-btn"
+                    class="black-button"
+                    data-project-id="{{ project.id }}"
+                >
+                    <span id="favorite-btn-text">
+                        {% if is_favorited %}
+                            Убрать из избранного
+                        {% else %}
+                            В избранное
+                        {% endif %}
+                    </span>
+                </button>
+            {% endif %}
+
             {% if user.id == project.owner.id %}
                 <a href="/projects/{{ project.id }}/edit" class="black-button">
                     {% include 'includes/svg/pen.html' %}
@@ -71,8 +90,7 @@
                             data-project="{{ project.id }}"
                             data-user-id="{{ request.user.id }}"
                             data-user-name="{{ request.user.name }} {{ request.user.surname }}"
-                            data-user-avatar="{% if request.user.avatar %}{{ request.user.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
-                    >
+                            data-user-avatar="{% if request.user.avatar %}{{ request.user.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}">
                         {% if request.user in project.participants.all %}
                             Отказаться от участия
                         {% else %}
@@ -82,34 +100,83 @@
                 {% endif %}
             {% endif %}
         </div>
-
     </div>
-    
 
     <div class="project-participants-card">
-    <h3>Участники проекта (<span id="participants-count" style="display:inline">{{ project.participants.all|length }}</span>)</h3>
-    <div id="participants-list" class="participants-list">
-        {% for member in project.participants.all %}
-        <a href="/users/{{ member.id }}" id="participant-{{ member.id }}">
-            <div class="participant-item">
-                {% if member.avatar %}
-                    <img src="{{ member.avatar.url }}" alt="Аватар" class="participant-avatar">
-                {% else %}
-                    <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="participant-avatar">
-                {% endif %}
-                <div class="participant-info">
-                    <span class="participant-name">{{ member.name }} {{ member.surname }}</span>
-                    <span class="participant-role">
-                        {% if member.id == project.owner.id %}Автор проекта{% else %}Участник{% endif %}
-                    </span>
+        <h3>Участники проекта (<span id="participants-count" style="display:inline">{{ project.participants.all|length }}</span>)</h3>
+        <div id="participants-list" class="participants-list">
+            {% for member in project.participants.all %}
+            <a href="/users/{{ member.id }}" id="participant-{{ member.id }}">
+                <div class="participant-item">
+                    {% if member.avatar %}
+                        <img src="{{ member.avatar.url }}" alt="Аватар" class="participant-avatar">
+                    {% else %}
+                        <img src="{% static 'images/default-avatar.png' %}" alt="Аватар по умолчанию" class="participant-avatar">
+                    {% endif %}
+                    <div class="participant-info">
+                        <span class="participant-name">{{ member.name }} {{ member.surname }}</span>
+                        <span class="participant-role">
+                            {% if member.id == project.owner.id %}Автор проекта{% else %}Участник{% endif %}
+                        </span>
+                    </div>
                 </div>
-            </div>
-        </a>
-        {% empty %}
-        <p id="no-participants">Пока нет участников</p>
-        {% endfor %}
+            </a>
+            {% empty %}
+            <p id="no-participants">Пока нет участников</p>
+            {% endfor %}
         </div>
     </div>
 </div>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i += 1) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === `${name}=`) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const favoriteBtn = document.getElementById('favorite-btn');
+
+if (favoriteBtn) {
+    favoriteBtn.addEventListener('click', async function () {
+        const projectId = this.dataset.projectId;
+
+        try {
+            const response = await fetch(`/projects/${projectId}/toggle-favorite/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+
+            if (!response.ok) {
+                alert('Не удалось изменить избранное');
+                return;
+            }
+
+            const data = await response.json();
+            const favoriteBtnText = document.getElementById('favorite-btn-text');
+
+            if (data.favorited) {
+                favoriteBtnText.textContent = 'Убрать из избранного';
+            } else {
+                favoriteBtnText.textContent = 'В избранное';
+            }
+        } catch (error) {
+            alert('Произошла ошибка');
+        }
+    });
+}
+</script>
 {% endblock %}
 {% endwith %}

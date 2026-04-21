@@ -36,10 +36,28 @@ def favorite_projects_view(request):
 
 def project_detail_view(request, project_id):
     project = get_object_or_404(
-        Project.objects.select_related('owner').prefetch_related('participants', 'skills'),
+        Project.objects.select_related('owner').prefetch_related(
+            'participants',
+            'skills',
+            'interested_users',
+        ),
         pk=project_id,
     )
-    return render(request, 'projects/project-details.html', {'project': project})
+
+    is_favorited = False
+    if request.user.is_authenticated:
+        is_favorited = project.interested_users.filter(
+            pk=request.user.pk,
+        ).exists()
+
+    return render(
+        request,
+        'projects/project-details.html',
+        {
+            'project': project,
+            'is_favorited': is_favorited,
+        },
+    )
 
 
 @login_required
