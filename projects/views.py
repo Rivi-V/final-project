@@ -18,7 +18,7 @@ def project_list_view(request):
     projects = Project.objects.select_related('owner').prefetch_related('participants')
     page = paginate_queryset(
         projects.distinct().order_by('-created_at', '-id'),
-        request.GET.get('page'),
+        request,
     )
     return render(request, 'projects/project_list.html', {'projects': page})
 
@@ -30,7 +30,10 @@ def favorite_projects_view(request):
     projects = Project.objects.filter(interested_users=request.user).select_related(
         'owner'
     ).prefetch_related('participants')
-    page = paginate_queryset(projects.order_by('-created_at', '-id'), request.GET.get('page'))
+    page = paginate_queryset(
+        projects.order_by('-created_at', '-id'),
+        request,
+    )
     return render(request, 'projects/favorite_projects.html', {'projects': page})
 
 

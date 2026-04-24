@@ -29,9 +29,11 @@ AVATAR_IMAGE_FORMAT = 'PNG'
 AVATAR_FILENAME_TEMPLATE = 'avatar_{}.png'
 AVATAR_RANDOM_MIN = 100000
 AVATAR_RANDOM_MAX = 999999
+
+TRUETYPE_FONTS_DIR = Path('/usr/share/fonts/truetype')
 AVATAR_POSSIBLE_FONT_PATHS = (
-    Path('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'),
-    Path('/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf'),
+    TRUETYPE_FONTS_DIR / 'dejavu' / 'DejaVuSans-Bold.ttf',
+    TRUETYPE_FONTS_DIR / 'liberation2' / 'LiberationSans-Bold.ttf',
 )
 
 

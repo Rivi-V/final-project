@@ -1,108 +1,182 @@
-# Первоначальная настройка проекта TeamFinder
+# TeamFinder
 
-## 1. Виртуальное окружение
+TeamFinder — это веб-приложение для поиска команды и совместной работы над проектами.  
+Пользователи могут создавать проекты, просматривать профили других участников, присоединяться к интересующим проектам и управлять своими данными через личный кабинет.
 
-Перед началом работы необходимо создать и активировать виртуальное окружение Python.  
+## Возможности проекта
 
+- регистрация и авторизация пользователей по email и паролю;
+- просмотр списка проектов на главной странице;
+- создание, редактирование и завершение проектов;
+- просмотр публичных профилей пользователей;
+- редактирование собственного профиля;
+- добавление проектов в избранное;
+- участие в проектах других пользователей;
+- пагинация списков проектов и пользователей;
+- административное управление пользователями и проектами через Django admin.
 
-1. **Создайте виртуальное окружение (в папке проекта):**
-   ```bash
-   python3 -m venv venv
-   ```
+## Технологический стек
 
-   После этого появится папка `venv`, где будут храниться зависимости проекта.
+- Python 3.12
+- Django
+- PostgreSQL
+- Docker / Docker Compose
+- HTML, CSS, JavaScript
+- Pillow
+- python-decouple
+- pytest
 
-2. **Активируйте окружение:**
+Точные версии зависимостей указаны в `requirements.txt`.
 
-    - **Windows (PowerShell):**
-      ```bash
-      venv\Scripts\Activate.ps1
-      ```
-    - **Windows (cmd):**
-      ```bash
-      venv\Scripts\activate
-      ```
-    - **Linux/Mac:**
-      ```bash
-      source venv/bin/activate
-      ```
+## Структура `.env`
 
-3. **Установите зависимости из `requirements.txt`:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Создайте файл `.env` в корне проекта и заполните его по примеру `.env_example`.
 
-   После установки в окружении будут доступны все нужные библиотеки Django-проекта.
+Пример содержимого:
 
-## 2. Создание `.env`
-
-Файл `.env` содержит конфиденциальные настройки проекта — ключ Django, параметры БД и другие переменные.  
-
-Особое внимание обратите на строчку `TASK_VERSION=`. 
-Добавьте число, которое соответствует вашему варианту задания. 
-Этот параметр определяет, какие шаблоны использовать для сайта (из папок `templates_var1`/`templates_var2`/`templates_var3`).
-Лишние две папки не из вашего варианта можно удалить.
-
-В репозитории есть пример `.env_example`, который нужно скопировать и заполнить:
-
-```bash
-cp .env_example .env
+```env
+DJANGO_SECRET_KEY=your-secret-key
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+POSTGRES_DB=teamfinder
+POSTGRES_USER=teamfinder_user
+POSTGRES_PASSWORD=teamfinder_password
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
 ```
 
-После этого откройте `.env` и укажите свои значения.  
+### Назначение переменных окружения
 
-| Переменная            | Назначение                                                                                                                                                 |
-|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **DJANGO_SECRET_KEY** | Секретный ключ Django, используемый для подписи cookie и токенов. Можно сгенерировать при помощи `get_random_secret_key` из `django.core.management.utils` |
-| **DJANGO_DEBUG**      | Режим отладки. Установите `True` во время разработки.                                                                                                      |
-| **POSTGRES_DB**       | Имя базы данных PostgreSQL, которую будет использовать Django.                                                                                             |
-| **POSTGRES_USER**     | Имя пользователя PostgreSQL.                                                                                                                               |
-| **POSTGRES_PASSWORD** | Пароль пользователя PostgreSQL.                                                                                                                            |
-| **POSTGRES_HOST**     | Адрес сервера БД. В случае локальной разработки localhost.                                                                                                 |
-| **POSTGRES_PORT**     | Порт подключения к БД (по умолчанию `5432`).                                                                                                               |
-| **TASK_VERSION**      | Номер варианта вашего задания. Используется для определения набора HTML-шаблонов.                                                                          |
+- `DJANGO_SECRET_KEY` — секретный ключ Django;
+- `DJANGO_DEBUG` — режим отладки (`True` или `False`);
+- `DJANGO_ALLOWED_HOSTS` — список разрешённых хостов через запятую;
+- `POSTGRES_DB` — имя базы данных PostgreSQL;
+- `POSTGRES_USER` — пользователь PostgreSQL;
+- `POSTGRES_PASSWORD` — пароль PostgreSQL;
+- `POSTGRES_HOST` — хост базы данных;
+- `POSTGRES_PORT` — порт базы данных.
 
----
+## Запуск проекта через Docker Compose
 
-## 3. Запуск проекта через Docker Compose
+1. Склонируйте репозиторий:
+   ```bash
+   git clone <ссылка_на_репозиторий>
+   cd team-finder-ad-main-3
+   ```
 
-Для работы приложения **TeamFinder** используется база данных **PostgreSQL** и web-сервис Django.
-Оба сервиса поднимаются одной командой через `docker-compose.yml`.
+2. Создайте `.env` на основе примера:
+   ```bash
+   cp .env_example .env
+   ```
 
-1. Заполните `.env` на основе `.env_example`.
-2. Запустите контейнеры:
+   Для Windows:
+   ```bash
+   copy .env_example .env
+   ```
 
-```bash
-docker compose up --build
-```
+3. Запустите контейнеры:
+   ```bash
+   docker compose up --build
+   ```
 
-После запуска приложение доступно по адресу [http://localhost:8000](http://localhost:8000).
+4. Если миграции и заполнение тестовыми данными не выполняются автоматически, выполните:
+   ```bash
+   docker compose exec web python manage.py migrate
+   docker compose exec web python manage.py seed_demo_data
+   ```
 
-- База данных: `localhost:5432`
-- Django web: `localhost:8000`
+5. Проект будет доступен по адресу:
+   `http://localhost:8000`
 
-Команда контейнера web автоматически выполняет миграции и наполняет базу демо-данными (`seed_demo_data`).
+6. Админ-панель:
+   `http://localhost:8000/admin/`
 
-Остановка:
+### Остановка контейнеров
 
 ```bash
 docker compose down
 ```
 
-Чтобы удалить контейнеры вместе с томами:
+### Остановка с удалением томов
 
 ```bash
 docker compose down -v
 ```
 
-## 4. Локальный запуск без Docker (опционально)
+## Локальный запуск без Docker
 
-Если хотите запускать проект без Docker:
+1. Создайте виртуальное окружение:
+   ```bash
+   python -m venv venv
+   ```
+
+2. Активируйте его.
+
+   Windows:
+   ```bash
+   venv\Scripts\activate
+   ```
+
+   Linux / macOS:
+   ```bash
+   source venv/bin/activate
+   ```
+
+3. Установите зависимости:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Создайте и заполните `.env`.
+
+5. Примените миграции:
+   ```bash
+   python manage.py migrate
+   ```
+
+6. Загрузите тестовые данные:
+   ```bash
+   python manage.py seed_demo_data
+   ```
+
+7. Запустите сервер:
+   ```bash
+   python manage.py runserver
+   ```
+
+После запуска проект будет доступен по адресу:
+`http://127.0.0.1:8000`
+
+## Тестовые данные
+
+В проекте предусмотрена команда для загрузки демонстрационных пользователей и проектов:
 
 ```bash
-python manage.py migrate
 python manage.py seed_demo_data
-python manage.py runserver
 ```
 
-Теперь проект доступен по адресу [http://localhost:8000](http://localhost:8000).
+При запуске через Docker:
+
+```bash
+docker compose exec web python manage.py seed_demo_data
+```
+
+## Проверка кода и тестов
+
+Проверка стиля кода:
+
+```bash
+flake8 users projects team_finder
+```
+
+Запуск тестов:
+
+```bash
+pytest
+```
+
+или через Docker:
+
+```bash
+docker compose exec web python manage.py test
+```
