@@ -68,6 +68,6 @@ def users_list_view(request):
 
     context['participants'] = paginate_queryset(
         participants.distinct().order_by('-date_joined', '-id'),
-        request.GET.get('page'),
+        request,
     )
     return render(request, 'users/participants.html', context)
